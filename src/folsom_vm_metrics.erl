@@ -26,8 +26,11 @@
 -module(folsom_vm_metrics).
 
 -export([get_system_info/0,
+         get_system_info/1,
          get_statistics/0,
+         get_statistics/1,
          get_memory/0,
+         get_memory/1,
          get_process_info/0,
          get_port_info/0,
          get_ets_info/0,
@@ -45,11 +48,29 @@
 get_memory() ->
     erlang:memory().
 
+get_memory(Node) -> get_remote_stat(Node, erlang, memory, []).
+
+get_remote_stat(Node, M, F, A)->
+    Promise = rpc:async_call(Node, M, F, A),
+    case rpc:nb_yield(Promise, 30) of
+         timeout-> undefined;
+         {value, {badarg, _}}->undefined;
+         {value, {badrpc, _}}->undefined;
+         {value, V}->V
+    end.
+
 get_statistics() ->
-    [{Key, convert_statistics(Key, get_statistics(Key))} || Key <- ?STATISTICS].
+    [{Key, convert_statistics(Key, get_statistics_(Key))} || Key <- ?STATISTICS].
+
+get_statistics(Node) ->
+    [{Key, convert_statistics(Key, get_statistics_(Node, Key))} || Key <- ?STATISTICS].
 
 get_system_info() ->
-    [{Key, convert_system_info(Key, get_system_info(Key))} || Key <- ?SYSTEM_INFO].
+    [{Key, convert_system_info(Key, get_system_info_(Key))} || Key <- ?SYSTEM_INFO].
+
+get_system_info(Node) ->
+    [{Key, convert_system_info(Key, get_system_info_(Node, Key))} || Key <- ?SYSTEM_INFO].
+
 
 get_process_info() ->
     [{pid_port_fun_to_atom(Pid), get_process_info(Pid)} || Pid <- processes()].
@@ -68,15 +89,19 @@ get_dets_info() ->
 % wrap system_info and statistics in a try/catch in case keys are missing
 % in old/new versions of erlang
 
-get_system_info(Key) ->
+get_system_info_(Key) ->
     try erlang:system_info(Key) catch
                                     error:badarg->undefined
                                 end.
+get_system_info_(Node, Key) -> get_remote_stat(Node, erlang, system_info, [Key]).
 
-get_statistics(Key) ->
+get_statistics_(Key) ->
     try erlang:statistics(Key) catch
                                    error:badarg->undefined
                                end.
+
+get_statistics_(Node, Key) -> get_remote_stat(Node, erlang, system_info, [Key]).
+
 
 %% conversion functions for erlang:statistics(Key)
 
