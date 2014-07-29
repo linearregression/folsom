@@ -46,6 +46,8 @@ run_test_() ->
        fun folsom_erlang_checks:check_group_metrics/0},
       {"checking erlang vm metrics",
        fun folsom_erlang_checks:vm_metrics/0},
+      {"checking erlang vm metrics on remote node",
+       fun folsom_erlang_checks:vm_metrics_rpc/0},
       {"deleting metrics",
        fun folsom_erlang_checks:delete_metrics/0},
       {"cpu topology test",
