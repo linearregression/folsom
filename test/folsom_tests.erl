@@ -28,8 +28,10 @@
 
 run_test_() ->
     {setup,
-     fun () -> folsom:start() end,
-     fun (_) -> folsom:stop() end,
+     fun () -> folsom:start(), 
+               Node = 'rumata@localhost',
+               net_kernel:start([Node, longnames]) end,
+     fun (_) -> folsom:stop(), net_kernel:stop() end,
      [{"creating metrics",
        fun folsom_erlang_checks:create_metrics/0},
       {"tagging metrics",
@@ -46,7 +48,7 @@ run_test_() ->
        fun folsom_erlang_checks:check_group_metrics/0},
       {"checking erlang vm metrics",
        fun folsom_erlang_checks:vm_metrics/0},
-      {"checking erlang vm metrics on remote node",
+      {"checking erlang vm metrics ***** on remote node",
        fun folsom_erlang_checks:vm_metrics_rpc/0},
       {"deleting metrics",
        fun folsom_erlang_checks:delete_metrics/0},

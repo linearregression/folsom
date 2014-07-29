@@ -369,18 +369,18 @@ vm_metrics() ->
 
 vm_metrics_rpc() ->
     Node = 'rumata@localhost',
-    net_kernel:stop(),
-    net_kernel:start([Node, longnames]),
+    ?debugFmt("*** running vm metrics rpc on Node ~s *** ~n", [Node]),
     pong = net_adm:ping(Node),
     List1 = folsom_vm_metrics:get_memory(Node),
     true = lists:keymember(total, 1, List1),
-
+    ?debugFmt("*** running vm metrics Got ~s memory info *** ~n", [Node]),
     List2 = folsom_vm_metrics:get_statistics(Node),
     true = lists:keymember(context_switches, 1, List2),
+    ?debugFmt("*** running vm metrics Got ~s context switchs info *** ~n", [Node]),
 
     List3 = folsom_vm_metrics:get_system_info(Node),
     true = lists:keymember(allocated_areas, 1, List3),
-    net_kernel:stop().
+    ?debugFmt("*** running vm metrics Got ~s System info *** ~n", [Node]).
 
 counter_metric(Count, Counter) ->
     ok = folsom_metrics:new_counter(Counter),
